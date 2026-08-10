@@ -38,7 +38,7 @@
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            overflow: hidden;   /* prevent any scrolling */
+            overflow: hidden;
             cursor: crosshair;
             user-select: none;
         }
@@ -944,16 +944,18 @@
             text-transform: uppercase;
             margin-top: 3px;
         }
-        #fighters {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            padding: 10px 16px;
-            width: 100%;
-            max-width: 1100px;
-            flex: 1;
-            align-items: center;
-        }
+       #fighters {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 10px 16px;
+    width: 100%;
+    max-width: 1100px;
+    flex: 1;
+    align-items: center;
+    align-content: center;     
+    grid-auto-rows: min-content; 
+}
         @media(max-width:900px) {
             #fighters {
                 grid-template-columns: repeat(2, 1fr);
@@ -1449,6 +1451,28 @@
                 font-size: 0.45rem;
             }
         }
+
+
+
+
+        #counter {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    z-index: 10; /* Puts it above the selection screen */
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text2);
+    text-align: right;
+    line-height: 1.4;
+    pointer-events: none;
+}
+#counter #sel-count {
+    color: var(--accent);
+    font-size: 1.4rem;
+    font-weight: 900;
+    text-shadow: 0 0 15px var(--glow);
+}
     </style>
 </head>
 <body>
