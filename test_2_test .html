@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔️ Flapper Tournament</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Orbitron:wght@700;900&display=swap');
+:root {
+  --bg:#07080f;--surface:#0f1018;--surface2:#161825;--border:#22243a;
+  --text:#dde2f5;--text2:#7b82a8;--accent:#c44dff;--accent2:#6c3ce0;
+  --gold:#f0b90b;--green:#00e676;--red:#ff3d5a;--blue:#4da6ff;
+  --glow:rgba(196,77,255,0.45);--glow-gold:rgba(240,185,11,0.45);
+  --radius:16px;--radius-sm:10px;--tr:0.28s cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Rajdhani',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ─── BACKGROUND ─────────────────────────────── */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;}
+
+/* ─── LAYOUT ─────────────────────────────────── */
+.app{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:20px 24px 60px;display:flex;flex-direction:column;gap:28px;}
+
+/* ─── HEADER ─────────────────────────────────── */
+.header{text-align:center;padding:32px 0 8px;}
+.header .logo{font-size:60px;display:block;filter:drop-shadow(0 0 32px var(--glow));animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.header h1{font-family:'Orbitron',sans-serif;font-size:2.4rem;letter-spacing:.04em;
+  background:linear-gradient(135deg,#e0e0f0,#c44dff,#6c3ce0,#4da6ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:10px 0 4px;}
+.header .sub{color:var(--text2);letter-spacing:.1em;text-transform:uppercase;font-size:.85rem;}
+
+/* ─── NAV ────────────────────────────────────── */
+.nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:5px;
+  background:var(--surface);border:1px solid var(--border);border-radius:50px;
+  position:sticky;top:14px;z-index:20;backdrop-filter:blur(20px);
+  box-shadow:0 8px 40px rgba(0,0,0,.6);}
+.nav-btn{padding:11px 22px;border-radius:50px;border:none;background:transparent;
+  color:var(--text2);cursor:pointer;font-weight:700;font-size:.88rem;
+  font-family:'Rajdhani',sans-serif;letter-spacing:.04em;transition:var(--tr);white-space:nowrap;}
+.nav-btn:hover{color:var(--text);background:rgba(255,255,255,.04);}
+.nav-btn.active{background:var(--accent);color:#fff;box-shadow:0 0 28px var(--glow);}
+.badge{background:var(--gold);color:#000;font-size:.7rem;font-weight:800;padding:2px 9px;border-radius:12px;margin-left:5px;}
+
+/* ─── PANELS ─────────────────────────────────── */
+.panel{display:none;animation:fadeIn .35s ease-out;}
+.panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── CARD ───────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:26px;box-shadow:0 4px 28px rgba(0,0,0,.4);position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 25% 20%,rgba(196,77,255,.05) 0,transparent 65%),
+             radial-gradient(ellipse at 75% 80%,rgba(0,229,255,.04) 0,transparent 65%);
+  pointer-events:none;}
+.card-title{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;
+  color:#fff;margin-bottom:18px;display:flex;align-items:center;gap:10px;letter-spacing:.03em;}
+
+/* ─── FORM ───────────────────────────────────── */
+.form-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px;}
+.form-group label{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);font-weight:700;}
+input,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:11px 15px;border-radius:var(--radius-sm);font-size:.95rem;font-family:'Rajdhani',sans-serif;
+  outline:none;transition:var(--tr);width:100%;}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(196,77,255,.15);}
+input::placeholder{color:#444;}
+
+/* ─── BUTTONS ────────────────────────────────── */
+.btn{padding:11px 24px;border-radius:50px;border:none;cursor:pointer;
+  font-weight:700;font-size:.88rem;font-family:'Rajdhani',sans-serif;letter-spacing:.04em;
+  transition:var(--tr);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+  box-shadow:0 4px 18px rgba(196,77,255,.35);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 7px 28px rgba(196,77,255,.55);}
+.btn-gold{background:linear-gradient(135deg,#f0b90b,#e09000);color:#000;font-weight:800;
+  box-shadow:0 4px 22px rgba(240,185,11,.4);}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 7px 32px rgba(240,185,11,.62);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{filter:brightness(1.15);}
+.btn-sm{padding:7px 16px;font-size:.8rem;}
+
+/* ─── TEAM GRID ──────────────────────────────── */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.team-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;transition:var(--tr);}
+.team-card:hover{border-color:rgba(196,77,255,.4);box-shadow:0 8px 36px rgba(0,0,0,.5);transform:translateY(-2px);}
+.team-name{font-family:'Orbitron',sans-serif;font-size:1rem;color:#fff;font-weight:700;}
+.team-wins{color:var(--gold);font-size:.82rem;margin:4px 0 12px;}
+.player-list{list-style:none;display:flex;flex-direction:column;gap:5px;}
+.player-list li{padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;
+  font-size:.85rem;color:var(--text2);}
+
+/* ─── BRACKET ────────────────────────────────── */
+.bracket-wrap{display:flex;gap:14px;overflow-x:auto;padding:14px 4px;align-items:flex-start;}
+.bracket-col{display:flex;flex-direction:column;gap:10px;min-width:155px;}
+.bracket-col-label{font-family:'Orbitron',sans-serif;font-size:.72rem;color:var(--accent);
+  text-align:center;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.bracket-match{background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 13px;text-align:center;font-size:.84rem;}
+.bm-a{color:#ddd;padding:3px 0;}
+.bm-b{color:#999;padding:3px 0;border-top:1px solid #222;}
+.bm-vs{color:#555;font-size:.68rem;padding:2px 0;}
+.bm-winner{color:var(--gold);font-weight:700;font-size:.9rem;margin-top:5px;}
+.bracket-connector{display:flex;align-items:center;justify-content:center;
+  color:#333;font-size:1.2rem;min-width:28px;user-select:none;align-self:center;}
+
+/* ─── HISTORY ────────────────────────────────── */
+.history-list{display:flex;flex-direction:column;gap:7px;max-height:480px;overflow-y:auto;}
+.history-item{background:var(--surface2);border-radius:var(--radius-sm);padding:11px 16px;
+  display:flex;align-items:center;gap:11px;border-left:3px solid var(--accent);animation:fadeIn .3s ease-out;}
+.history-item.champ{border-left-color:var(--gold);background:rgba(240,185,11,.05);}
+.h-round{background:var(--accent2);color:#fff;padding:3px 10px;border-radius:14px;font-size:.72rem;font-weight:700;white-space:nowrap;}
+.h-detail{flex:1;font-size:.88rem;}
+.h-winner{color:var(--gold);font-weight:700;}
+
+/* ─── RANKINGS ───────────────────────────────── */
+.rank-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.rank-item{display:flex;align-items:center;gap:14px;padding:13px 17px;
+  background:var(--surface2);border-radius:var(--radius-sm);transition:var(--tr);}
+.rank-item:hover{background:#1e2035;}
+.rank-pos{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;width:38px;text-align:center;}
+.rank-pos.gold{color:var(--gold);}
+.rank-pos.silver{color:#c0c0c0;}
+.rank-pos.bronze{color:#cd7f32;}
+.rank-info{flex:1;}
+.rank-name{font-weight:700;font-size:1rem;color:#fff;}
+.rank-detail{font-size:.78rem;color:var(--text2);}
+.rank-val{font-family:'Orbitron',sans-serif;font-weight:800;color:var(--gold);}
+
+/* ─── TOAST ──────────────────────────────────── */
+.toasts{position:fixed;top:18px;right:18px;z-index:9000;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:13px 18px;color:#fff;font-weight:600;font-size:.88rem;
+  box-shadow:0 8px 36px rgba(0,0,0,.65);max-width:380px;pointer-events:auto;
+  animation:slideIn .35s ease-out,fadeOut .35s 2.7s ease-out forwards;}
+.toast.success{border-left:4px solid var(--green);}
+.toast.error{border-left:4px solid var(--red);}
+.toast.info{border-left:4px solid var(--blue);}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{to{opacity:0;transform:translateY(-8px)}}
+
+/* ─── MODAL OVERLAY ──────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);
+  display:none;align-items:center;justify-content:center;z-index:500;
+  backdrop-filter:blur(8px);}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:24px;
+  padding:22px;width:97%;max-width:820px;box-shadow:0 0 80px rgba(196,77,255,.25);}
+
+/* ─── DIFFICULTY PICKER ──────────────────────── */
+.diff-picker{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:18px 0;}
+.diff-btn{flex:1;min-width:140px;padding:18px;border-radius:14px;border:2px solid var(--border);
+  background:var(--surface2);color:var(--text);cursor:pointer;font-family:'Rajdhani',sans-serif;
+  font-size:1rem;font-weight:700;letter-spacing:.04em;transition:var(--tr);text-align:center;}
+.diff-btn:hover{border-color:rgba(196,77,255,.5);}
+.diff-btn.sel-normal{border-color:#4da6ff;background:rgba(77,166,255,.12);color:#4da6ff;}
+.diff-btn.sel-extreme{border-color:#ff3d5a;background:rgba(255,61,90,.12);color:#ff3d5a;}
+.diff-badge{display:block;font-size:1.8rem;margin-bottom:6px;}
+.diff-pts{font-size:.78rem;color:var(--text2);margin-top:4px;}
+
+/* ─── GAME AREA ──────────────────────────────── */
+.game-wrapper{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+.game-half{flex:1;min-width:240px;max-width:360px;position:relative;background:#0a0d12;
+  border-radius:14px;overflow:hidden;border:2px solid var(--border);}
+.game-half canvas{width:100%;height:100%;display:block;}
+.g-label{position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.75);color:#fff;padding:4px 14px;border-radius:20px;
+  font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;z-index:5;white-space:nowrap;}
+.g-score{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);
+  color:var(--gold);padding:4px 12px;border-radius:12px;font-family:'Orbitron',sans-serif;
+  font-weight:800;font-size:.9rem;z-index:5;}
+.g-ctrl{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.6);color:rgba(255,255,255,.55);padding:3px 10px;
+  border-radius:12px;font-size:.72rem;z-index:5;white-space:nowrap;}
+.dead-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);
+  display:none;align-items:center;justify-content:center;z-index:10;}
+.dead-overlay span{font-family:'Orbitron',sans-serif;color:var(--red);font-size:1.1rem;font-weight:900;
+  text-shadow:0 0 20px rgba(255,61,90,.8);}
+.modal-match-title{font-family:'Orbitron',sans-serif;font-size:1.1rem;color:#fff;
+  text-align:center;margin-bottom:4px;letter-spacing:.03em;}
+.modal-hint{color:var(--text2);text-align:center;font-size:.82rem;margin-top:10px;}
+
+/* ─── DIFF MODE LABEL ────────────────────────── */
+.mode-pill{padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;margin-left:8px;}
+.mode-pill.normal{background:rgba(77,166,255,.18);color:#4da6ff;}
+.mode-pill.extreme{background:rgba(255,61,90,.18);color:#ff3d5a;}
+
+/* ─── COUNTDOWN ──────────────────────────────── */
+.countdown-overlay{position:absolute;inset:0;background:rgba(7,8,15,.8);
+  display:flex;align-items:center;justify-content:center;z-index:15;border-radius:14px;}
+.countdown-overlay span{font-family:'Orbitron',sans-serif;font-size:3rem;color:#fff;
+  font-weight:900;text-shadow:0 0 30px var(--glow);animation:pop .4s ease-out;}
+@keyframes pop{from{transform:scale(2);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ─── RESPONSIVE ─────────────────────────────── */
+@media(max-width:700px){
+  .header h1{font-size:1.6rem;}
+  .nav-btn{padding:9px 13px;font-size:.78rem;}
+  .game-wrapper{flex-direction:column;align-items:center;}
+  .game-half{width:100%;max-width:100%;min-width:auto;}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div class="toasts" id="toasts"></div>
+
+<!-- ==================== MINI-GAME MODAL ==================== -->
+<div class="modal-overlay" id="miniModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div id="matchTitle" class="modal-match-title">⚔️ Match</div>
+      <button class="btn btn-danger btn-sm" id="btnCloseGame">✕ Forfeit</button>
+    </div>
+
+    <!-- Difficulty picker (shown before game starts) -->
+    <div id="diffPicker">
+      <p style="text-align:center;color:var(--text2);margin-bottom:6px;font-size:.85rem;">Choose difficulty before playing</p>
+      <div class="diff-picker">
+        <div class="diff-btn" id="diffNormal" onclick="chooseDiff('normal')">
+          <span class="diff-badge">🎮</span>Normal
+          <span class="diff-pts">1 pt per pipe</span>
+        </div>
+        <div class="diff-btn" id="diffExtreme" onclick="chooseDiff('extreme')">
+          <span class="diff-badge">🔥</span>Extreme
+          <span class="diff-pts">3 pts per pipe · faster</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <button class="btn btn-gold" id="btnLaunchGame" disabled onclick="launchGame()">🚀 Start Match</button>
+      </div>
+    </div>
+
+    <!-- Game area (hidden until launched) -->
+    <div id="gameArea" style="display:none;">
+      <div class="game-wrapper" id="gameWrapper">
+        <div class="game-half" id="halfA">
+          <div class="g-label" id="labelA">Team A</div>
+          <div class="g-score" id="scoreA">0</div>
+          <div class="g-ctrl" id="ctrlA">W to flap</div>
+          <canvas id="canvasA" width="320" height="480"></canvas>
+          <div class="dead-overlay" id="deadA"><span>💀 DEAD</span></div>
+          <div class="countdown-overlay" id="countA"><span id="cdA">3</span></div>
+        </div>
+        <div class="game-half" id="halfB">
+          <div class="g-label" id="labelB">Team B</div>
+          <div class="g-score" id="scoreB">0</div>
+          <div class="g-ctrl" id="ctrlB">↑ to flap</div>
+          <canvas id="canvasB" width="320" height="480"></canvas>
+          <div class="dead-overlay" id="deadB"><span>💀 DEAD</span></div>
+          <div class="countdown-overlay" id="countB"><span id="cdB">3</span></div>
+        </div>
+      </div>
+      <p class="modal-hint">🖥️ <b>Left bird:</b> W key &nbsp;|&nbsp; <b>Right bird:</b> ↑ Arrow &nbsp;|&nbsp; Mobile: tap your half</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MAIN APP ==================== -->
+<div class="app">
+  <div class="header">
+    <span class="logo">🏆</span>
+    <h1>Flapper Tournament</h1>
+    <p class="sub">Gaming Team System · Mini-Game Showdown</p>
+  </div>
+
+  <nav class="nav" id="navTabs">
+    <button class="nav-btn active" data-panel="teams">👥 Teams <span class="badge" id="teamBadge">0</span></button>
+    <button class="nav-btn" data-panel="create">➕ Create</button>
+    <button class="nav-btn" data-panel="add-player">🎮 Add Player</button>
+    <button class="nav-btn" data-panel="tournament">⚡ Tournament</button>
+    <button class="nav-btn" data-panel="history">📜 History</button>
+    <button class="nav-btn" data-panel="rankings">📊 Rankings</button>
+  </nav>
+
+  <!-- Teams -->
+  <div class="panel active" id="panel-teams">
+    <div class="card">
+      <div class="card-title">👥 All Teams</div>
+      <div class="team-grid" id="teamGrid">
+        <p style="color:var(--text2);padding:32px;text-align:center;">No teams yet — create one to get started! 🚀</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create team -->
+  <div class="panel" id="panel-create">
+    <div class="card" style="max-width:480px;">
+      <div class="card-title">➕ Create New Team</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Team Name</label>
+          <input type="text" id="createTeamName" placeholder="Enter team name…" maxlength="30">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btnCreateTeam">✨ Create Team</button>
+      <p style="color:var(--text2);font-size:.74rem;margin-top:9px;">Max 8 teams · Names must be unique</p>
+    </div>
+  </div>
+
+  <!-- Add player -->
+  <div class="panel" id="panel-add-player">
+    <div class="card" style="max-width:520px;">
+      <div class="card-title">🎮 Add Player to Team</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Select Team</label>
+          <select id="addPlayerTeam"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Player Name</label>
+          <input type="text" id="addPlayerName" placeholder="Gamer tag…" maxlength="25">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btnAddPlayer">🎯 Add Player</button>
+      <p style="color:var(--text2);font-size:.74rem;margin-top:9px;">No stats needed — the mini-game decides everything!</p>
+    </div>
+  </div>
+
+  <!-- Tournament -->
+  <div class="panel" id="panel-tournament">
+    <div class="card">
+      <div class="card-title">⚡ Tournament Bracket</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+        <button class="btn btn-gold" id="btnStartTournament">🔥 Start Tournament</button>
+        <button class="btn btn-primary" id="btnPlayMatch" style="display:none;">🎮 Play Next Match</button>
+      </div>
+      <div class="bracket-wrap" id="bracketContainer">
+        <p style="color:var(--text2);padding:16px;">Create teams and start the tournament!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="panel" id="panel-history">
+    <div class="card">
+      <div class="card-title">📜 Match History</div>
+      <div class="history-list" id="historyList">
+        <p style="color:var(--text2);padding:16px;">No matches played yet.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rankings -->
+  <div class="panel" id="panel-rankings">
+    <div class="card">
+      <div class="card-title">📊 Team Rankings</div>
+      <ul class="rank-list" id="rankingList">
+        <li style="color:var(--text2);padding:16px;">No data yet.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════╗
+// ║              PARTICLE BACKGROUND              ║
+// ╚══════════════════════════════════════════════╝
+(function(){
+  const cvs=document.getElementById('bg-canvas'),ctx=cvs.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=cvs.width=innerWidth;H=cvs.height=innerHeight;pts=[];
+    const n=Math.min(Math.floor(W*H/14000),110);
+    for(let i=0;i<n;i++)pts.push({x:Math.random()*W,y:Math.random()*H,
+      vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,
+      size:Math.random()*1.5+.5,op:Math.random()*.4+.15,
+      hue:Math.random()<.5?280:200});}
+  window.addEventListener('resize',resize);resize();
+  function loop(){ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;
+      if(p.x<-5||p.x>W+5||p.y<-5||p.y>H+5){p.x=Math.random()*W;p.y=Math.random()*H;}
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${p.hue},75%,60%,${p.op})`;ctx.fill();});
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<90){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
+        ctx.strokeStyle=`rgba(196,77,255,${.07*(1-d/90)})`;ctx.lineWidth=.5;ctx.stroke();}}
+    requestAnimationFrame(loop);}
+  loop();
+})();
+
+// ╔══════════════════════════════════════════════╗
+// ║                DATA STORE                     ║
+// ╚══════════════════════════════════════════════╝
+const MAX_TEAMS=8,MAX_PLAYERS=5;
+let teams=[],matchHistory=[],tournBracket=null,tournActive=false,roundIdx=0,matchIdx=0;
+
+function getTeam(n){return teams.find(t=>t.name===n)||null;}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+// ╔══════════════════════════════════════════════╗
+// ║                 TOAST                         ║
+// ╚══════════════════════════════════════════════╝
+function toast(msg,type='info'){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;el.textContent=msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),3100);}
+
+// ╔══════════════════════════════════════════════╗
+// ║                RENDER UI                      ║
+// ╚══════════════════════════════════════════════╝
+function updateUI(){renderTeams();renderSelect();renderBracket();renderHistory();renderRankings();
+  document.getElementById('teamBadge').textContent=teams.length;}
+
+function renderTeams(){
+  const g=document.getElementById('teamGrid');
+  if(!teams.length){g.innerHTML='<p style="color:var(--text2);padding:32px;text-align:center;">No teams yet — create one to get started! 🚀</p>';return;}
+  g.innerHTML=teams.map(t=>`
+    <div class="team-card">
+      <div class="team-name">🛡️ ${t.name}</div>
+      <div class="team-wins">🏆 Wins: ${t.wins}</div>
+      <ul class="player-list">
+        ${t.players.length?t.players.map(p=>`<li>${p}</li>`).join(''):'<li style="color:#444;">No players yet</li>'}
+      </ul>
+      <div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap;">
+        <button class="btn btn-danger btn-sm del-btn" data-t="${t.name.replace(/"/g,'&quot;')}">🗑️ Delete</button>
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('.del-btn').forEach(b=>b.addEventListener('click',e=>deleteTeam(e.target.dataset.t)));}
+
+function renderSelect(){
+  document.getElementById('addPlayerTeam').innerHTML=
+    '<option value="">-- Choose team --</option>'+
+    teams.filter(t=>t.players.length<MAX_PLAYERS)
+         .map(t=>`<option value="${t.name}">${t.name} (${t.players.length}/${MAX_PLAYERS})</option>`)
+         .join('');}
+
+function renderBracket(){
+  const c=document.getElementById('bracketContainer');
+  if(!tournBracket||!tournBracket.length){
+    c.innerHTML='<p style="color:var(--text2);padding:16px;">Create teams and start the tournament!</p>';
+    document.getElementById('btnPlayMatch').style.display='none';return;}
+  let html='';
+  tournBracket.forEach((round,ri)=>{
+    if(ri>0)html+='<div class="bracket-connector">→</div>';
+    html+=`<div class="bracket-col"><div class="bracket-col-label">Round ${ri+1}</div>`;
+    round.forEach(m=>{
+      html+=`<div class="bracket-match">
+        <div class="bm-a">${m.t1}</div><div class="bm-vs">VS</div><div class="bm-b">${m.t2}</div>
+        ${m.winner?`<div class="bm-winner">🏆 ${m.winner}</div>`:''}
+      </div>`;});
+    html+='</div>';});
+  c.innerHTML=html;
+  const cur=tournBracket[roundIdx];
+  document.getElementById('btnPlayMatch').style.display=
+    (tournActive&&cur&&matchIdx<cur.length)?'inline-flex':'none';}
+
+function renderHistory(){
+  const el=document.getElementById('historyList');
+  if(!matchHistory.length){el.innerHTML='<p style="color:var(--text2);">No matches yet.</p>';return;}
+  el.innerHTML=matchHistory.slice().reverse().map(m=>{
+    if(m.round===0)return`<div class="history-item champ"><span class="h-round" style="background:var(--gold);color:#000;">🏆 CHAMPION</span><div class="h-detail"><span class="h-winner">${m.winner}</span> wins the tournament!</div></div>`;
+    return`<div class="history-item"><span class="h-round">R${m.round}</span><div class="h-detail">${m.t1} vs ${m.t2} → <span class="h-winner">${m.winner}</span></div></div>`;
+  }).join('');}
+
+function renderRankings(){
+  const el=document.getElementById('rankingList');
+  if(!teams.length){el.innerHTML='<li style="color:var(--text2);">No teams yet.</li>';return;}
+  const sorted=[...teams].sort((a,b)=>b.wins-a.wins);
+  const PC=['gold','silver','bronze'],PE=['🥇','🥈','🥉'];
+  el.innerHTML=sorted.map((t,i)=>`
+    <li class="rank-item">
+      <span class="rank-pos ${i<3?PC[i]:''}">${i<3?PE[i]:`${i+1}.`}</span>
+      <div class="rank-info"><div class="rank-name">${t.name}</div><div class="rank-detail">${t.players.length} players</div></div>
+      <span class="rank-val">🏆 ${t.wins}</span>
+    </li>`).join('');}
+
+// ╔══════════════════════════════════════════════╗
+// ║              CORE ACTIONS                     ║
+// ╚══════════════════════════════════════════════╝
+function createTeam(){
+  const n=document.getElementById('createTeamName').value.trim();
+  if(!n)return toast('Enter a team name.','error');
+  if(teams.length>=MAX_TEAMS)return toast('Max 8 teams reached.','error');
+  if(getTeam(n))return toast('Name already taken!','error');
+  teams.push({name:n,players:[],wins:0});
+  document.getElementById('createTeamName').value='';
+  toast(`Team "${n}" created! 🎉`,'success');updateUI();switchPanel('teams');}
+
+function addPlayer(){
+  const tn=document.getElementById('addPlayerTeam').value;
+  const pn=document.getElementById('addPlayerName').value.trim();
+  if(!tn||!pn)return toast('Pick a team and enter a player name.','error');
+  const t=getTeam(tn);if(!t)return toast('Team not found.','error');
+  if(t.players.length>=MAX_PLAYERS)return toast('Team is full!','error');
+  t.players.push(pn);document.getElementById('addPlayerName').value='';
+  toast(`${pn} joined ${tn}! 🎮`,'success');updateUI();switchPanel('teams');}
+
+function deleteTeam(name){
+  if(!confirm(`Delete team "${name}"?`))return;
+  teams=teams.filter(t=>t.name!==name);
+  if(tournActive){tournBracket=null;tournActive=false;roundIdx=0;matchIdx=0;}
+  toast(`Team "${name}" deleted.`,'info');updateUI();}
+
+// ╔══════════════════════════════════════════════╗
+// ║           TOURNAMENT LOGIC                    ║
+// ╚══════════════════════════════════════════════╝
+function startTournament(){
+  if(teams.length<2)return toast('Need at least 2 teams!','error');
+  const empty=teams.filter(t=>t.players.length===0);
+  if(empty.length)return toast(`Add players to: ${empty.map(t=>t.name).join(', ')}  ⚠️`,'error');
+  matchHistory=[];
+  const n=teams.length;let bs=1;while(bs<n)bs<<=1;
+  const sh=shuffle(teams.map(t=>t.name));
+  const r0=[];
+  for(let i=0;i<bs;i+=2)r0.push({t1:i<n?sh[i]:'BYE',t2:(i+1)<n?sh[i+1]:'BYE',winner:null});
+  tournBracket=[r0];roundIdx=0;matchIdx=0;tournActive=true;
+  toast('Tournament started! 🔥','success');updateUI();switchPanel('tournament');advanceByes();}
+
+function advanceByes(){
+  if(!tournActive)return;
+  const round=tournBracket[roundIdx];
+  while(matchIdx<round.length){
+    const m=round[matchIdx];
+    if(m.t1==='BYE'&&m.t2==='BYE'){m.winner='BYE';matchHistory.push({round:roundIdx+1,t1:'BYE',t2:'BYE',winner:'BYE'});matchIdx++;}
+    else if(m.t1==='BYE'){m.winner=m.t2;matchHistory.push({round:roundIdx+1,t1:'BYE',t2:m.t2,winner:m.t2});matchIdx++;}
+    else if(m.t2==='BYE'){m.winner=m.t1;matchHistory.push({round:roundIdx+1,t1:m.t1,t2:'BYE',winner:m.t1});matchIdx++;}
+    else break;}
+  if(matchIdx>=round.length)advanceRound();
+  updateUI();}
+
+function advanceRound(){
+  const round=tournBracket[roundIdx];
+  const winners=round.map(m=>m.winner).filter(w=>w&&w!=='BYE');
+  if(winners.length===1){
+    const champ=winners[0];
+    matchHistory.push({round:0,t1:'',t2:'',winner:champ});
+    const t=getTeam(champ);if(t)t.wins++;
+    tournActive=false;updateUI();
+    setTimeout(()=>toast(`🏆 ${champ} IS THE CHAMPION! 🏆`,'success'),400);return;}
+  const next=[];
+  for(let i=0;i<winners.length;i+=2)
+    next.push({t1:winners[i],t2:(i+1<winners.length)?winners[i+1]:'BYE',winner:null});
+  tournBracket.push(next);roundIdx++;matchIdx=0;advanceByes();}
+
+function playNextMatch(){
+  if(!tournActive)return;
+  const round=tournBracket[roundIdx];
+  if(matchIdx>=round.length)return;
+  const m=round[matchIdx];
+  if(m.t1==='BYE'||m.t2==='BYE'){advanceByes();return;}
+  openMiniGame(m.t1,m.t2);}
+
+// ╔══════════════════════════════════════════════╗
+// ║           MINI-GAME ENGINE                    ║
+// ╚══════════════════════════════════════════════╝
+let gA=null,gB=null,rafId=null,mgActive=false,chosenDiff=null;
+
+const DIFF={
+  normal:{gap:175,speed:2.2,freq:95,mult:1,gravity:.42,jump:-7.5,col:'#4da6ff'},
+  extreme:{gap:120,speed:3.8,freq:65,mult:3,gravity:.7,jump:-9.5,col:'#ff3d5a'}};
+
+class Bird{
+  constructor(x,y,cfg){this.x=x;this.y=y;this.r=12;this.g=cfg.gravity;
+    this.v=0;this.j=cfg.jump;this.col=cfg.col;this.rot=0;this.frame=0;}
+  flap(){this.v=this.j;}
+  update(){this.v+=this.g;this.y+=this.v;this.rot=Math.min(Math.max(this.v*2.5,-30),30);this.frame++;}
+  draw(ctx){
+    ctx.save();ctx.translate(this.x,this.y);ctx.rotate(this.rot*Math.PI/180);
+    ctx.fillStyle=this.col;ctx.beginPath();ctx.arc(0,0,this.r,0,Math.PI*2);ctx.fill();
+    // glow
+    ctx.shadowColor=this.col;ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;
+    // eye
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(7,-3,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#000';ctx.beginPath();ctx.arc(8,-3,1.5,0,Math.PI*2);ctx.fill();
+    // beak
+    ctx.fillStyle='#e8a200';ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(22,0);ctx.lineTo(12,5);ctx.fill();
+    // wing
+    const wy=4+Math.sin(this.frame*.25)*4;
+    ctx.fillStyle=this.col+'99';ctx.beginPath();ctx.ellipse(-4,wy,9,5,0,0,Math.PI*2);ctx.fill();
+    ctx.restore();}
+}
+
+class FlapperGame{
+  constructor(canvasId,diff){
+    this.cvs=document.getElementById(canvasId);
+    this.ctx=this.cvs.getContext('2d');
+    this.W=this.cvs.width;this.H=this.cvs.height;
+    this.GH=28;this.cfg=diff;
+    this.bird=new Bird(65,this.H/2,diff);
+    this.pipes=[];this.frame=0;this.score=0;this.dead=false;this.mult=diff.mult;
+  }
+  start(){this.bird=new Bird(65,this.H/2,this.cfg);this.pipes=[];this.frame=0;this.score=0;this.dead=false;}
+  flap(){if(!this.dead)this.bird.flap();}
+  update(){
+    if(this.dead)return;
+    this.bird.update();
+    if(this.bird.y-this.bird.r<=0||this.bird.y+this.bird.r>=this.H-this.GH){this.dead=true;return;}
+    this.frame++;
+    if(this.frame%this.cfg.freq===0){
+      const py=-(Math.random()*160+130);
+      this.pipes.push({x:this.W,y:py,w:58,h:280+Math.random()*50,passed:false});}
+    for(let p of this.pipes){
+      p.x-=this.cfg.speed;
+      if(!p.passed&&p.x+p.w<this.bird.x-this.bird.r){p.passed=true;this.score+=this.mult;}
+    }
+    this.pipes=this.pipes.filter(p=>p.x+p.w>0);
+    for(let p of this.pipes){
+      if(this.bird.x+this.bird.r>p.x&&this.bird.x-this.bird.r<p.x+p.w){
+        if(this.bird.y-this.bird.r<p.y+p.h||this.bird.y+this.bird.r>p.y+p.h+this.cfg.gap){this.dead=true;break;}
+      }
+    }
+  }
+  draw(){
+    const ctx=this.ctx;
+    // Sky gradient
+    const sky=ctx.createLinearGradient(0,0,0,this.H);
+    sky.addColorStop(0,this.cfg===DIFF.extreme?'#1a0a0a':'#1a2a3a');
+    sky.addColorStop(1,this.cfg===DIFF.extreme?'#2a0515':'#0a1520');
+    ctx.fillStyle=sky;ctx.fillRect(0,0,this.W,this.H);
+    // Pipes
+    for(let p of this.pipes){
+      const pg=ctx.createLinearGradient(p.x,0,p.x+p.w,0);
+      pg.addColorStop(0,this.cfg===DIFF.extreme?'#8b0000':'#1a4a1a');
+      pg.addColorStop(.5,this.cfg===DIFF.extreme?'#c0392b':'#2ecc71');
+      pg.addColorStop(1,this.cfg===DIFF.extreme?'#8b0000':'#1a4a1a');
+      ctx.fillStyle=pg;
+      ctx.fillRect(p.x,p.y,p.w,p.h);
+      ctx.fillRect(p.x,p.y+p.h+this.cfg.gap,p.w,this.H);
+      // caps
+      const capC=this.cfg===DIFF.extreme?'#e74c3c':'#27ae60';
+      ctx.fillStyle=capC;
+      ctx.fillRect(p.x-5,p.y+p.h-16,p.w+10,16);
+      ctx.fillRect(p.x-5,p.y+p.h+this.cfg.gap,p.w+10,16);
+    }
+    // Ground
+    ctx.fillStyle=this.cfg===DIFF.extreme?'#3d0a0a':'#2c1a0a';
+    ctx.fillRect(0,this.H-this.GH,this.W,this.GH);
+    // Ground line
+    ctx.fillStyle=this.cfg===DIFF.extreme?'#8b2020':'#5a3a10';
+    ctx.fillRect(0,this.H-this.GH,this.W,3);
+    this.bird.draw(ctx);
+    // Score on canvas
+    ctx.fillStyle='rgba(255,255,255,0.15)';
+    ctx.font=`bold 44px 'Orbitron',monospace`;
+    ctx.textAlign='center';
+    ctx.fillText(this.score,this.W/2,this.H/2+16);
+    ctx.textAlign='left';
+  }
+}
+
+function chooseDiff(d){
+  chosenDiff=d;
+  document.getElementById('diffNormal').className='diff-btn'+(d==='normal'?' sel-normal':'');
+  document.getElementById('diffExtreme').className='diff-btn'+(d==='extreme'?' sel-extreme':'');
+  document.getElementById('btnLaunchGame').disabled=false;}
+
+function openMiniGame(tA,tB){
+  chosenDiff=null;
+  document.getElementById('diffNormal').className='diff-btn';
+  document.getElementById('diffExtreme').className='diff-btn';
+  document.getElementById('btnLaunchGame').disabled=true;
+  document.getElementById('diffPicker').style.display='block';
+  document.getElementById('gameArea').style.display='none';
+  document.getElementById('matchTitle').textContent=`⚔️ ${tA}  vs  ${tB}`;
+  document.getElementById('labelA').textContent=tA;
+  document.getElementById('labelB').textContent=tB;
+  document.getElementById('ctrlA').textContent='W to flap';
+  document.getElementById('ctrlB').textContent='↑ to flap';
+  document.getElementById('scoreA').textContent='0';
+  document.getElementById('scoreB').textContent='0';
+  document.getElementById('deadA').style.display='none';
+  document.getElementById('deadB').style.display='none';
+  // store pending match teams
+  window._mgTeamA=tA;window._mgTeamB=tB;
+  document.getElementById('miniModal').classList.add('open');}
+
+function launchGame(){
+  if(!chosenDiff)return;
+  const d=DIFF[chosenDiff];
+  document.getElementById('diffPicker').style.display='none';
+  document.getElementById('gameArea').style.display='block';
+  // mode pill on labels
+  const pill=`<span class="mode-pill ${chosenDiff}">${chosenDiff==='extreme'?'🔥 EXTREME':'🎮 NORMAL'}</span>`;
+  // build games
+  gA=new FlapperGame('canvasA',d);
+  gB=new FlapperGame('canvasB',d);
+  mgActive=true;
+  // reset dead overlays & countdowns
+  document.getElementById('deadA').style.display='none';
+  document.getElementById('deadB').style.display='none';
+  document.getElementById('countA').style.display='flex';
+  document.getElementById('countB').style.display='flex';
+  // Countdown 3-2-1
+  let cd=3;
+  document.getElementById('cdA').textContent=cd;
+  document.getElementById('cdB').textContent=cd;
+  const ct=setInterval(()=>{
+    cd--;
+    if(cd>0){document.getElementById('cdA').textContent=cd;document.getElementById('cdB').textContent=cd;}
+    else{clearInterval(ct);
+      document.getElementById('countA').style.display='none';
+      document.getElementById('countB').style.display='none';
+      gA.start();gB.start();
+      addKeyListeners();addTouchListeners();
+      runGameLoop();}
+  },900);
+  document.getElementById('cdA').textContent=3;
+  document.getElementById('cdB').textContent=3;}
+
+function runGameLoop(){
+  if(!mgActive)return;
+  gA.update();gB.update();
+  gA.draw();gB.draw();// ← THE CRITICAL MISSING CALLS
+  document.getElementById('scoreA').textContent=gA.score;
+  document.getElementById('scoreB').textContent=gB.score;
+  if(gA.dead)document.getElementById('deadA').style.display='flex';
+  if(gB.dead)document.getElementById('deadB').style.display='flex';
+  if(gA.dead&&gB.dead){resolveMatch();return;}
+  rafId=requestAnimationFrame(runGameLoop);}
+
+function resolveMatch(){
+  const tA=window._mgTeamA,tB=window._mgTeamB;
+  const sA=gA.score,sB=gB.score;
+  let winner;
+  if(sA>sB)winner=tA;
+  else if(sB>sA)winner=tB;
+  else winner=Math.random()<.5?tA:tB;// tie-break
+  const round=tournBracket[roundIdx];
+  round[matchIdx].winner=winner;
+  matchHistory.push({round:roundIdx+1,t1:tA,t2:tB,winner});
+  const wt=getTeam(winner);if(wt)wt.wins++;
+  matchIdx++;
+  toast(`${winner} wins! (${sA} vs ${sB}) 🏆`,'success');
+  advanceByes();updateUI();closeMiniGame();}
+
+function closeMiniGame(){
+  mgActive=false;if(rafId)cancelAnimationFrame(rafId);
+  removeKeyListeners();removeTouchListeners();
+  document.getElementById('miniModal').classList.remove('open');
+  document.getElementById('gameArea').style.display='none';}
+
+// Keys
+function keyDown(e){
+  if(!mgActive)return;
+  if(e.key==='w'||e.key==='W'){e.preventDefault();gA?.flap();}
+  else if(e.key==='ArrowUp'){e.preventDefault();gB?.flap();}}
+function addKeyListeners(){document.addEventListener('keydown',keyDown);}
+function removeKeyListeners(){document.removeEventListener('keydown',keyDown);}
+
+// Touch (top half = A, bottom half = B on mobile)
+function setupTouch(el,game){
+  const rect=el.getBoundingClientRect,fn=(e)=>{e.preventDefault();
+    if(!mgActive)return;
+    const t=e.touches[0];const r=el.getBoundingClientRect();
+    const y=t.clientY-r.top;
+    game.flap();
+  };
+  el._tfn=fn;el.addEventListener('touchstart',fn,{passive:false});}
+function addTouchListeners(){
+  const hA=document.getElementById('halfA'),hB=document.getElementById('halfB');
+  setupTouch(hA,gA);setupTouch(hB,gB);}
+function removeTouchListeners(){
+  ['halfA','halfB'].forEach(id=>{const el=document.getElementById(id);
+    if(el._tfn){el.removeEventListener('touchstart',el._tfn);el._tfn=null;}});}
+
+
+function switchPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const p=document.getElementById(`panel-${name}`);if(p)p.classList.add('active');
+  const b=document.querySelector(`.nav-btn[data-panel="${name}"]`);if(b)b.classList.add('active');
+  updateUI();}
+
+
+document.getElementById('navTabs').addEventListener('click',e=>{
+  const b=e.target.closest('.nav-btn');if(!b)return;switchPanel(b.dataset.panel);});
+document.getElementById('btnCreateTeam').addEventListener('click',createTeam);
+document.getElementById('btnAddPlayer').addEventListener('click',addPlayer);
+document.getElementById('btnStartTournament').addEventListener('click',startTournament);
+document.getElementById('btnPlayMatch').addEventListener('click',playNextMatch);
+document.getElementById('btnCloseGame').addEventListener('click',closeMiniGame);
+document.getElementById('miniModal').addEventListener('click',e=>{if(e.target===document.getElementById('miniModal'))closeMiniGame();});
+document.getElementById('createTeamName').addEventListener('keydown',e=>{if(e.key==='Enter')createTeam();});
+document.getElementById('addPlayerName').addEventListener('keydown',e=>{if(e.key==='Enter')addPlayer();});
+
+
+</script>
+</body>
+</html>

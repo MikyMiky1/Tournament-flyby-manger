@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔️ FIGHTER SELECT — TEAM CREDITS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Black+Ops+One&display=swap');
+
+/* ── RESET & ROOT ──────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#030508;
+  --c1:#c44dff; --c1d:#4a0080; --c1g:rgba(196,77,255,0.4);
+  --c2:#00e5ff; --c2d:#004455; --c2g:rgba(0,229,255,0.4);
+  --c3:#f0b90b; --c3d:#3d2e00; --c3g:rgba(240,185,11,0.4);
+  --c4:#00e676; --c4d:#003320; --c4g:rgba(0,230,118,0.4);
+  --red:#ff3d5a;
+}
+
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  background:var(--bg);
+  font-family:'Share Tech Mono',monospace;
+  cursor:crosshair;
+  user-select:none;
+}
+
+/* ── SCANLINES ─────────────────────────────── */
+body::after{
+  content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.18) 2px,rgba(0,0,0,.18) 4px);
+  animation:scanMove 8s linear infinite;
+}
+@keyframes scanMove{0%{background-position:0 0}100%{background-position:0 100vh}}
+
+/* ── HEX GRID BG ───────────────────────────── */
+#bg-cvs{position:fixed;inset:0;z-index:0;}
+
+/* ── LAYOUT ────────────────────────────────── */
+#app{
+  position:relative;z-index:1;
+  width:100%;height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:0;
+  overflow:hidden;
+}
+
+/* ── HEADER ────────────────────────────────── */
+#header{
+  text-align:center;
+  padding:14px 0 6px;
+  position:relative;
+  z-index:5;
+}
+#coin-insert{
+  font-family:'Share Tech Mono',monospace;
+  font-size:.72rem;
+  letter-spacing:.18em;
+  color:#555;
+  animation:blink 1s step-end infinite;
+  margin-bottom:6px;
+}
+@keyframes blink{50%{opacity:0}}
+#title-main{
+  font-family:'Black Ops One',sans-serif;
+  font-size:clamp(1.6rem,4vw,3.2rem);
+  letter-spacing:.08em;
+  background:linear-gradient(135deg,#fff 0%,var(--c1) 40%,var(--c2) 70%,var(--c3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 20px var(--c1g));
+  animation:titlePulse 3s ease-in-out infinite;
+}
+@keyframes titlePulse{
+  0%,100%{filter:drop-shadow(0 0 18px var(--c1g))}
+  50%{filter:drop-shadow(0 0 40px var(--c1g)) drop-shadow(0 0 80px rgba(196,77,255,0.2))}
+}
+#title-sub{
+  font-size:.68rem;letter-spacing:.22em;color:#555;
+  text-transform:uppercase;margin-top:3px;
+}
+
+/* ── FIGHTERS GRID ─────────────────────────── */
+#fighters{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  padding:10px 16px;
+  width:100%;
+  max-width:1100px;
+  flex:1;
+  align-items:center;
+}
+@media(max-width:700px){
+  #fighters{grid-template-columns:repeat(2,1fr);gap:8px;}
+}
+
+/* ── FIGHTER CARD ──────────────────────────── */
+.fighter{
+  position:relative;
+  border:2px solid #1a1a2e;
+  border-radius:4px;
+  background:rgba(10,10,20,.9);
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .15s ease,border-color .2s;
+  display:flex;flex-direction:column;align-items:center;
+  padding-bottom:10px;
+  /* entry animation */
+  opacity:0;transform:translateY(60px);
+}
+.fighter.entered{
+  animation:dropIn .5s cubic-bezier(.2,.8,.3,1.4) forwards;
+}
+@keyframes dropIn{
+  0%{opacity:0;transform:translateY(60px)scale(.9)}
+  70%{transform:translateY(-6px)scale(1.02)}
+  100%{opacity:1;transform:translateY(0)scale(1)}
+}
+.fighter:hover{transform:scale(1.04);z-index:10;}
+.fighter.selected{
+  z-index:20;
+  animation:selectFlash .25s ease-out;
+}
+@keyframes selectFlash{
+  0%{filter:brightness(3)}
+  100%{filter:brightness(1)}
+}
+
+/* corner bracket decorations */
+.fighter::before,.fighter::after{
+  content:'';position:absolute;width:14px;height:14px;z-index:3;
+  transition:width .3s,height .3s;
+}
+.fighter::before{top:0;left:0;border-top:3px solid;border-left:3px solid;}
+.fighter::after{bottom:0;right:0;border-bottom:3px solid;border-right:3px solid;}
+.fighter:hover::before,.fighter:hover::after,.fighter.selected::before,.fighter.selected::after{width:22px;height:22px;}
+
+.f1::before,.f1::after{border-color:var(--c1);}
+.f2::before,.f2::after{border-color:var(--c2);}
+.f3::before,.f3::after{border-color:var(--c3);}
+.f4::before,.f4::after{border-color:var(--c4);}
+
+/* glow on selected/hover */
+.fighter.selected,.fighter:hover{
+  box-shadow:inset 0 0 60px rgba(0,0,0,.7);
+}
+.f1:hover,.f1.selected{border-color:var(--c1);box-shadow:inset 0 0 40px rgba(196,77,255,.15),0 0 30px var(--c1g);}
+.f2:hover,.f2.selected{border-color:var(--c2);box-shadow:inset 0 0 40px rgba(0,229,255,.15),0 0 30px var(--c2g);}
+.f3:hover,.f3.selected{border-color:var(--c3);box-shadow:inset 0 0 40px rgba(240,185,11,.15),0 0 30px var(--c3g);}
+.f4:hover,.f4.selected{border-color:var(--c4);box-shadow:inset 0 0 40px rgba(0,230,118,.15),0 0 30px var(--c4g);}
+
+/* ── AVATAR CANVAS ─────────────────────────── */
+.avatar-wrap{
+  position:relative;
+  width:100%;
+  padding-top:85%;
+  overflow:hidden;
+}
+.avatar-wrap canvas{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+}
+/* scanline on avatar */
+.avatar-wrap::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.35) 3px,rgba(0,0,0,.35) 4px);
+}
+
+/* ── CLASS BADGE ───────────────────────────── */
+.class-badge{
+  font-family:'Orbitron',sans-serif;
+  font-size:.52rem;letter-spacing:.18em;
+  text-transform:uppercase;
+  margin:-2px 0 4px;
+  padding:3px 10px;
+  border-radius:20px;
+}
+.f1 .class-badge{color:var(--c1);background:rgba(196,77,255,.12);border:1px solid rgba(196,77,255,.3);}
+.f2 .class-badge{color:var(--c2);background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);}
+.f3 .class-badge{color:var(--c3);background:rgba(240,185,11,.1);border:1px solid rgba(240,185,11,.3);}
+.f4 .class-badge{color:var(--c4);background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);}
+
+/* ── NAME / ID ─────────────────────────────── */
+.fighter-name{
+  font-family:'Black Ops One',sans-serif;
+  font-size:clamp(.75rem,1.6vw,1.1rem);
+  letter-spacing:.04em;
+  color:#fff;
+  text-align:center;
+  line-height:1.2;
+  padding:0 8px;
+  text-shadow:0 0 12px currentColor;
+}
+.f1 .fighter-name{color:var(--c1);}
+.f2 .fighter-name{color:var(--c2);}
+.f3 .fighter-name{color:var(--c3);}
+.f4 .fighter-name{color:var(--c4);}
+.fighter-id{
+  font-size:.62rem;color:#555;letter-spacing:.1em;margin:2px 0 6px;
+}
+
+/* ── STATS BARS ────────────────────────────── */
+.stats{width:90%;display:flex;flex-direction:column;gap:4px;}
+.stat-row{display:flex;align-items:center;gap:6px;}
+.stat-lbl{font-size:.5rem;letter-spacing:.08em;color:#666;width:30px;text-align:right;flex-shrink:0;}
+.stat-track{flex:1;height:4px;background:#111;border-radius:2px;overflow:hidden;position:relative;}
+.stat-fill{height:100%;border-radius:2px;width:0%;transition:width 1.2s cubic-bezier(.2,.8,.4,1);}
+.stat-val{font-size:.5rem;color:#444;width:18px;}
+.fighter.entered .stat-fill{/* width set by JS */}
+
+/* ── SPECIAL MOVE (hover reveal) ───────────── */
+.special-wrap{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.82);
+  opacity:0;transition:opacity .2s;
+  padding:12px;
+  backdrop-filter:blur(4px);
+}
+.fighter:hover .special-wrap{opacity:1;}
+.special-title{
+  font-family:'Orbitron',sans-serif;font-size:.6rem;
+  letter-spacing:.2em;text-transform:uppercase;color:#888;margin-bottom:6px;
+}
+.special-name{
+  font-family:'Black Ops One',sans-serif;
+  font-size:clamp(.9rem,2vw,1.4rem);
+  letter-spacing:.05em;text-align:center;line-height:1.2;
+  margin-bottom:10px;
+}
+.f1 .special-name{color:var(--c1);}
+.f2 .special-name{color:var(--c2);}
+.f3 .special-name{color:var(--c3);}
+.f4 .special-name{color:var(--c4);}
+.special-desc{
+  font-size:.6rem;color:#999;text-align:center;line-height:1.6;
+  letter-spacing:.04em;
+}
+.select-cta{
+  margin-top:10px;font-family:'Orbitron',sans-serif;
+  font-size:.52rem;letter-spacing:.2em;
+  padding:5px 14px;border-radius:20px;
+  animation:blink .7s step-end infinite;
+}
+.f1 .select-cta{border:1px solid var(--c1);color:var(--c1);}
+.f2 .select-cta{border:1px solid var(--c2);color:var(--c2);}
+.f3 .select-cta{border:1px solid var(--c3);color:var(--c3);}
+.f4 .select-cta{border:1px solid var(--c4);color:var(--c4);}
+
+/* ── SELECTED OVERLAY ──────────────────────── */
+.sel-overlay{
+  position:absolute;inset:0;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;z-index:5;
+}
+.fighter.selected .sel-overlay{display:flex;}
+.sel-tag{
+  font-family:'Black Ops One',sans-serif;
+  font-size:clamp(1rem,2.5vw,1.8rem);
+  letter-spacing:.08em;color:#fff;
+  text-shadow:0 0 20px #fff,0 0 40px currentColor;
+  animation:selTagAnim .6s ease-out;
+}
+.f1.selected .sel-tag{color:var(--c1);}
+.f2.selected .sel-tag{color:var(--c2);}
+.f3.selected .sel-tag{color:var(--c3);}
+.f4.selected .sel-tag{color:var(--c4);}
+@keyframes selTagAnim{
+  0%{transform:scale(2);opacity:0}
+  60%{transform:scale(0.9)}
+  100%{transform:scale(1);opacity:1}
+}
+
+/* ── READY STAMP ───────────────────────────── */
+.ready-stamp{
+  position:absolute;bottom:10px;right:8px;
+  font-family:'Orbitron',sans-serif;font-size:.55rem;
+  letter-spacing:.12em;padding:3px 8px;border-radius:2px;
+  transform:rotate(-8deg);display:none;
+  border:2px solid;
+}
+.fighter.selected .ready-stamp{display:block;}
+.f1.selected .ready-stamp{color:var(--c1);border-color:var(--c1);}
+.f2.selected .ready-stamp{color:var(--c2);border-color:var(--c2);}
+.f3.selected .ready-stamp{color:var(--c3);border-color:var(--c3);}
+.f4.selected .ready-stamp{color:var(--c4);border-color:var(--c4);}
+
+/* ── BOTTOM MARQUEE ────────────────────────── */
+#marquee-wrap{
+  width:100%;overflow:hidden;
+  border-top:1px solid #1a1a2e;
+  border-bottom:1px solid #1a1a2e;
+  background:rgba(0,0,0,.6);
+  padding:6px 0;position:relative;z-index:5;flex-shrink:0;
+}
+#marquee{
+  white-space:nowrap;
+  font-size:.62rem;letter-spacing:.14em;color:#444;
+  display:inline-block;
+  animation:scroll 22s linear infinite;
+}
+@keyframes scroll{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+
+/* ── SCREEN FLASH ──────────────────────────── */
+#flash{
+  position:fixed;inset:0;z-index:9998;
+  background:#fff;opacity:0;pointer-events:none;
+  transition:opacity .05s;
+}
+
+/* ── VS DIVIDERS (between cards) ───────────── */
+.vs-bolt{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-family:'Black Ops One',sans-serif;
+  font-size:.7rem;color:#222;z-index:4;
+  pointer-events:none;
+}
+
+/* ── COUNTER ───────────────────────────────── */
+#counter{
+  position:fixed;top:14px;right:18px;z-index:50;
+  font-size:.68rem;color:#333;letter-spacing:.12em;
+  text-align:right;
+}
+#counter span{
+  font-family:'Orbitron',sans-serif;
+  font-size:1.1rem;color:#ff3d5a;
+}
+</style>
+</head>
+<body>
+<div id="flash"></div>
+<canvas id="bg-cvs"></canvas>
+
+<div id="counter">
+  FIGHTERS SELECTED<br>
+  <span id="sel-count">0</span> / 4
+</div>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div id="coin-insert">— INSERT COIN TO CONTINUE —</div>
+    <div id="title-main">SELECT YOUR FIGHTER</div>
+    <div id="title-sub">TOURNAMENT SYSTEM &nbsp;·&nbsp; TEAM CREDITS &nbsp;·&nbsp; 2026</div>
+  </div>
+
+  <!-- FIGHTERS -->
+  <div id="fighters">
+
+    <!-- F1: MICHAEL EMAD -->
+    <div class="fighter f1" id="f1" onclick="selectFighter(this,1)">
+      <div class="avatar-wrap"><canvas id="av1"></canvas></div>
+      <div class="class-badge">THE ARCHITECT</div>
+      <div class="fighter-name">Michael<br>Emad</div>
+      <div class="fighter-id"># 25030105</div>
+      <div class="stats" id="stats1">
+        <div class="stat-row"><span class="stat-lbl">CODE</span><div class="stat-track"><div class="stat-fill" style="background:var(--c1);width:0%" data-w="95%"></div></div><span class="stat-val">95</span></div>
+        <div class="stat-row"><span class="stat-lbl">LEAD</span><div class="stat-track"><div class="stat-fill" style="background:var(--c1);width:0%" data-w="92%"></div></div><span class="stat-val">92</span></div>
+        <div class="stat-row"><span class="stat-lbl">VIBE</span><div class="stat-track"><div class="stat-fill" style="background:var(--c1);width:0%" data-w="88%"></div></div><span class="stat-val">88</span></div>
+      </div>
+      <div class="special-wrap">
+        <div class="special-title">⚡ SPECIAL MOVE</div>
+        <div class="special-name">System<br>Overload</div>
+        <div class="special-desc">Deploys 300 lines of<br>flawless architecture<br>in a single keystroke.</div>
+        <div class="select-cta">PRESS TO SELECT</div>
+      </div>
+      <div class="sel-overlay"><div class="sel-tag">SELECTED!</div></div>
+      <div class="ready-stamp">READY</div>
+    </div>
+
+    <!-- F2: ZEYAD AYMAN -->
+    <div class="fighter f2" id="f2" onclick="selectFighter(this,2)">
+      <div class="avatar-wrap"><canvas id="av2"></canvas></div>
+      <div class="class-badge">THE PHANTOM</div>
+      <div class="fighter-name">Zeyad<br>Ayman</div>
+      <div class="fighter-id"># 25030321</div>
+      <div class="stats" id="stats2">
+        <div class="stat-row"><span class="stat-lbl">LOGIC</span><div class="stat-track"><div class="stat-fill" style="background:var(--c2);width:0%" data-w="91%"></div></div><span class="stat-val">91</span></div>
+        <div class="stat-row"><span class="stat-lbl">SPD</span><div class="stat-track"><div class="stat-fill" style="background:var(--c2);width:0%" data-w="96%"></div></div><span class="stat-val">96</span></div>
+        <div class="stat-row"><span class="stat-lbl">COOL</span><div class="stat-track"><div class="stat-fill" style="background:var(--c2);width:0%" data-w="87%"></div></div><span class="stat-val">87</span></div>
+      </div>
+      <div class="special-wrap">
+        <div class="special-title">⚡ SPECIAL MOVE</div>
+        <div class="special-name">Ghost<br>Protocol</div>
+        <div class="special-desc">Vanishes into the codebase,<br>fixes every bug,<br>leaves no trace behind.</div>
+        <div class="select-cta">PRESS TO SELECT</div>
+      </div>
+      <div class="sel-overlay"><div class="sel-tag">SELECTED!</div></div>
+      <div class="ready-stamp">READY</div>
+    </div>
+
+    <!-- F3: AHMAD EID -->
+    <div class="fighter f3" id="f3" onclick="selectFighter(this,3)">
+      <div class="avatar-wrap"><canvas id="av3"></canvas></div>
+      <div class="class-badge">THE HARBINGER</div>
+      <div class="fighter-name">Ahmad<br>Eid</div>
+      <div class="fighter-id"># 25030069</div>
+      <div class="stats" id="stats3">
+        <div class="stat-row"><span class="stat-lbl">CRAFT</span><div class="stat-track"><div class="stat-fill" style="background:var(--c3);width:0%" data-w="94%"></div></div><span class="stat-val">94</span></div>
+        <div class="stat-row"><span class="stat-lbl">PREC</span><div class="stat-track"><div class="stat-fill" style="background:var(--c3);width:0%" data-w="89%"></div></div><span class="stat-val">89</span></div>
+        <div class="stat-row"><span class="stat-lbl">WIS</span><div class="stat-track"><div class="stat-fill" style="background:var(--c3);width:0%" data-w="93%"></div></div><span class="stat-val">93</span></div>
+      </div>
+      <div class="special-wrap">
+        <div class="special-title">⚡ SPECIAL MOVE</div>
+        <div class="special-name">Golden<br>Ratio</div>
+        <div class="special-desc">Applies the divine<br>proportion to every pixel.<br>Perfection is non-negotiable.</div>
+        <div class="select-cta">PRESS TO SELECT</div>
+      </div>
+      <div class="sel-overlay"><div class="sel-tag">SELECTED!</div></div>
+      <div class="ready-stamp">READY</div>
+    </div>
+
+    <!-- F4: OMAR OSAMA MUSTAFA -->
+    <div class="fighter f4" id="f4" onclick="selectFighter(this,4)">
+      <div class="avatar-wrap"><canvas id="av4"></canvas></div>
+      <div class="class-badge">THE VANGUARD</div>
+      <div class="fighter-name">Omar Osama<br>Mustafa</div>
+      <div class="fighter-id"># 25030472</div>
+      <div class="stats" id="stats4">
+        <div class="stat-row"><span class="stat-lbl">DEF</span><div class="stat-track"><div class="stat-fill" style="background:var(--c4);width:0%" data-w="95%"></div></div><span class="stat-val">95</span></div>
+        <div class="stat-row"><span class="stat-lbl">STRC</span><div class="stat-track"><div class="stat-fill" style="background:var(--c4);width:0%" data-w="90%"></div></div><span class="stat-val">90</span></div>
+        <div class="stat-row"><span class="stat-lbl">TEAM</span><div class="stat-track"><div class="stat-fill" style="background:var(--c4);width:0%" data-w="97%"></div></div><span class="stat-val">97</span></div>
+      </div>
+      <div class="special-wrap">
+        <div class="special-title">⚡ SPECIAL MOVE</div>
+        <div class="special-name">Shield<br>Bash</div>
+        <div class="special-desc">Absorbs every requirement,<br>shields the team from chaos,<br>delivers structure from void.</div>
+        <div class="select-cta">PRESS TO SELECT</div>
+      </div>
+      <div class="sel-overlay"><div class="sel-tag">SELECTED!</div></div>
+      <div class="ready-stamp">READY</div>
+    </div>
+
+  </div><!-- /fighters -->
+
+  <!-- MARQUEE -->
+  <div id="marquee-wrap">
+    <div id="marquee">
+      ⚔️ TOURNAMENT SYSTEM &nbsp;·&nbsp; BUILT BY TEAM ALPHA &nbsp;·&nbsp;
+      MICHAEL EMAD · 25030105 &nbsp;·&nbsp; ZEYAD AYMAN · 25030321 &nbsp;·&nbsp;
+      AHMAD EID · 25030069 &nbsp;·&nbsp; OMAR OSAMA MUSTAFA · 25030472 &nbsp;·&nbsp;
+      🏆 C++ TO WEB · INNOVATION UNIVERSITY · 2026 &nbsp;·&nbsp;
+      ❤️ SPECIAL THANKS TO ALL WHO PLAYED &nbsp;·&nbsp;
+      ⚔️ TOURNAMENT SYSTEM &nbsp;·&nbsp; BUILT BY TEAM ALPHA &nbsp;·&nbsp;
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════════════
+//  HEX GRID BACKGROUND
+// ══════════════════════════════════════════════
+(function(){
+  const cvs=document.getElementById('bg-cvs'),ctx=cvs.getContext('2d');
+  let W,H;
+  function resize(){W=cvs.width=innerWidth;H=cvs.height=innerHeight;}
+  window.addEventListener('resize',resize);resize();
+  const hexes=[];const R=36;
+  function buildHexes(){
+    hexes.length=0;
+    const hx=R*Math.sqrt(3),hy=R*1.5;
+    for(let row=-1;row<H/hy+2;row++){
+      for(let col=-1;col<W/hx+2;col++){
+        const x=col*hx+(row%2)*hx/2;
+        const y=row*hy;
+        hexes.push({x,y,alpha:Math.random()*.12+.02,
+          pulse:Math.random()*Math.PI*2,
+          speed:Math.random()*.008+.002});
+      }
+    }
+  }
+  buildHexes();window.addEventListener('resize',buildHexes);
+  function hexPath(x,y,r){
+    ctx.beginPath();
+    for(let i=0;i<6;i++){
+      const a=Math.PI/3*i-Math.PI/6;
+      const px=x+r*Math.cos(a),py=y+r*Math.sin(a);
+      i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+  }
+  let t=0;
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    t+=.005;
+    for(const h of hexes){
+      h.pulse+=h.speed;
+      const a=h.alpha*(0.5+0.5*Math.sin(h.pulse));
+      ctx.strokeStyle=`rgba(100,60,180,${a})`;
+      ctx.lineWidth=.6;
+      hexPath(h.x,h.y,R-2);
+      ctx.stroke();
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ══════════════════════════════════════════════
+//  AVATAR DRAWING  (unique per fighter)
+// ══════════════════════════════════════════════
+function lerp(a,b,t){return a+(b-a)*t;}
+function drawAvatar(id, color, style){
+  const cvs=document.getElementById('av'+id);
+  if(!cvs)return;
+  const W=cvs.offsetWidth||cvs.parentElement.offsetWidth||200;
+  const H=Math.floor(W*0.9);
+  cvs.width=W;cvs.height=H;
+  const ctx=cvs.getContext('2d');
+
+  // dark bg with radial glow
+  const grd=ctx.createRadialGradient(W/2,H*.55,H*.05,W/2,H*.4,H*.7);
+  grd.addColorStop(0,color+'22');grd.addColorStop(1,'#000');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+
+  const cx=W/2,cy=H*.48;
+  const t=performance.now()*.0008;
+
+  if(style==='angular'){ // Michael – geometric shape
+    // torso
+    const pts=[[cx,cy-H*.28],[cx+W*.22,cy-H*.05],[cx+W*.16,cy+H*.22],
+                [cx-W*.16,cy+H*.22],[cx-W*.22,cy-H*.05]];
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();
+    const fg=ctx.createLinearGradient(cx-W*.22,cy-H*.28,cx+W*.22,cy+H*.22);
+    fg.addColorStop(0,color+'cc');fg.addColorStop(1,color+'44');
+    ctx.fillStyle=fg;ctx.fill();
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+    // head
+    ctx.beginPath();ctx.arc(cx,cy-H*.35,W*.12,0,Math.PI*2);
+    ctx.fillStyle=color+'aa';ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+    // glowing eyes
+    [cx-W*.045,cx+W*.045].forEach(ex=>{
+      ctx.beginPath();ctx.arc(ex,cy-H*.37,3,0,Math.PI*2);
+      ctx.fillStyle='#fff';ctx.fill();
+      ctx.shadowColor=color;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;});
+    // energy lines
+    for(let i=0;i<6;i++){
+      const a=t*2+i*(Math.PI*2/6),r1=W*.18,r2=W*.26;
+      ctx.beginPath();
+      ctx.moveTo(cx+r1*Math.cos(a),cy-H*.05+r1*Math.sin(a));
+      ctx.lineTo(cx+r2*Math.cos(a),cy-H*.05+r2*Math.sin(a));
+      ctx.strokeStyle=color+Math.floor(80+60*Math.sin(t+i)).toString(16).padStart(2,'0');
+      ctx.lineWidth=1.5;ctx.stroke();}
+  }
+  else if(style==='phantom'){ // Zeyad – ghost/shadow
+    // body silhouette
+    ctx.beginPath();
+    ctx.moveTo(cx,cy-H*.32);
+    ctx.bezierCurveTo(cx+W*.25,cy-H*.25,cx+W*.28,cy,cx+W*.2,cy+H*.25);
+    ctx.lineTo(cx-W*.2,cy+H*.25);
+    ctx.bezierCurveTo(cx-W*.28,cy,cx-W*.25,cy-H*.25,cx,cy-H*.32);
+    const sg=ctx.createLinearGradient(cx,cy-H*.32,cx,cy+H*.25);
+    sg.addColorStop(0,color+'dd');sg.addColorStop(1,color+'11');
+    ctx.fillStyle=sg;ctx.fill();
+    ctx.strokeStyle=color+'88';ctx.lineWidth=1.5;ctx.stroke();
+    // glitch lines
+    for(let i=0;i<4;i++){
+      const y=cy-H*.15+i*H*.12;const w=W*(0.12+Math.sin(t*3+i)*0.08);
+      ctx.fillStyle=color+(Math.random()>.5?'44':'22');
+      ctx.fillRect(cx-w*.5,y,w,3);}
+    // eyes (glowing slits)
+    [cx-W*.06,cx+W*.06].forEach(ex=>{
+      ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=10;
+      ctx.fillRect(ex-5,cy-H*.31,10,3);ctx.shadowBlur=0;});
+    // orbiting particle
+    for(let i=0;i<3;i++){
+      const a=t*1.5+i*(Math.PI*2/3);const r=W*.32;
+      ctx.beginPath();ctx.arc(cx+r*Math.cos(a),cy+r*.4*Math.sin(a),3,0,Math.PI*2);
+      ctx.fillStyle=color+'cc';ctx.shadowColor=color;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;}
+  }
+  else if(style==='golden'){ // Ahmad – ornate/complex
+    // base circle
+    ctx.beginPath();ctx.arc(cx,cy,H*.3,0,Math.PI*2);
+    const bg2=ctx.createRadialGradient(cx,cy,5,cx,cy,H*.3);
+    bg2.addColorStop(0,color+'33');bg2.addColorStop(1,'transparent');
+    ctx.fillStyle=bg2;ctx.fill();
+    // golden armour plates
+    const plates=[[cx,cy-H*.3,W*.13],[cx+W*.24,cy,W*.09],[cx-W*.24,cy,W*.09],[cx,cy+H*.25,W*.11]];
+    plates.forEach(([px,py,pr])=>{
+      ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);
+      const pg2=ctx.createRadialGradient(px,py,1,px,py,pr);
+      pg2.addColorStop(0,color);pg2.addColorStop(1,color+'33');
+      ctx.fillStyle=pg2;ctx.fill();
+      ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();});
+    // connecting spokes
+    for(let i=0;i<8;i++){
+      const a=t*.5+i*(Math.PI/4);
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+H*.3*Math.cos(a),cy+H*.3*Math.sin(a));
+      ctx.strokeStyle=color+Math.floor(20+15*Math.sin(t+i)).toString(16).padStart(2,'0');
+      ctx.lineWidth=1;ctx.stroke();}
+    // crown
+    for(let i=0;i<5;i++){
+      const a=-Math.PI/2+(i-2)*(Math.PI/7);const r=H*.28+6*Math.sin(t*2+i);
+      ctx.beginPath();ctx.arc(cx+r*Math.cos(a),cy+r*Math.sin(a),4,0,Math.PI*2);
+      ctx.fillStyle=i===2?'#fff':color;ctx.shadowColor=color;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;}
+  }
+  else{ // Omar – shield/vanguard
+    // shield shape
+    ctx.beginPath();
+    ctx.moveTo(cx,cy-H*.32);
+    ctx.lineTo(cx+W*.24,cy-H*.18);
+    ctx.lineTo(cx+W*.24,cy+H*.05);
+    ctx.quadraticCurveTo(cx+W*.24,cy+H*.3,cx,cy+H*.35);
+    ctx.quadraticCurveTo(cx-W*.24,cy+H*.3,cx-W*.24,cy+H*.05);
+    ctx.lineTo(cx-W*.24,cy-H*.18);
+    ctx.closePath();
+    const shg=ctx.createLinearGradient(cx-W*.24,cy-H*.32,cx+W*.24,cy+H*.35);
+    shg.addColorStop(0,color+'cc');shg.addColorStop(.5,color+'55');shg.addColorStop(1,color+'22');
+    ctx.fillStyle=shg;ctx.fill();
+    ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.stroke();
+    // inner cross / emblem
+    ctx.strokeStyle=color+'88';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(cx,cy-H*.2);ctx.lineTo(cx,cy+H*.22);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx-W*.15,cy+H*.02);ctx.lineTo(cx+W*.15,cy+H*.02);ctx.stroke();
+    // pulsing core
+    const pr2=W*.07*(0.85+0.15*Math.sin(t*3));
+    ctx.beginPath();ctx.arc(cx,cy+H*.02,pr2,0,Math.PI*2);
+    ctx.fillStyle=color+'55';ctx.shadowColor=color;ctx.shadowBlur=14;ctx.fill();ctx.shadowBlur=0;
+    // outer rim sparks
+    for(let i=0;i<5;i++){
+      const a=t+i*(Math.PI*2/5);const r=W*.28;
+      const ex=cx+r*Math.cos(a),ey=(cy+H*.02)+r*.7*Math.sin(a);
+      ctx.beginPath();ctx.arc(ex,ey,2,0,Math.PI*2);
+      ctx.fillStyle=color+'bb';ctx.shadowColor=color;ctx.shadowBlur=6;ctx.fill();ctx.shadowBlur=0;}
+  }
+
+  // scanline effect baked in
+  for(let y=0;y<H;y+=4){
+    ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fillRect(0,y,W,1);}
+}
+
+function startAvatarLoop(id,color,style){
+  function loop(){drawAvatar(id,color,style);requestAnimationFrame(loop);}
+  loop();}
+
+// ══════════════════════════════════════════════
+//  ENTRIES & STAT BARS
+// ══════════════════════════════════════════════
+const fighters=document.querySelectorAll('.fighter');
+const delays=[0,200,400,600];
+const styles=[
+  {id:1,color:'#c44dff',style:'angular'},
+  {id:2,color:'#00e5ff',style:'phantom'},
+  {id:3,color:'#f0b90b',style:'golden'},
+  {id:4,color:'#00e676',style:'shield'},
+];
+
+// Wait for layout then start avatars
+window.addEventListener('load',()=>{
+  styles.forEach(s=>{
+    startAvatarLoop(s.id,s.color,s.style);
+  });
+  fighters.forEach((f,i)=>{
+    setTimeout(()=>{
+      f.classList.add('entered');
+      // Animate stat bars
+      setTimeout(()=>{
+        f.querySelectorAll('.stat-fill').forEach(bar=>{
+          bar.style.width=bar.dataset.w;
+        });
+      },400);
+    },delays[i]+200);
+  });
+});
+
+// ══════════════════════════════════════════════
+//  SELECT FIGHTER
+// ══════════════════════════════════════════════
+let selCount=0;
+function selectFighter(el,num){
+  const wasSelected=el.classList.contains('selected');
+  if(!wasSelected){
+    selCount++;
+    document.getElementById('sel-count').textContent=selCount;
+  }
+  // flash
+  const fl=document.getElementById('flash');
+  fl.style.opacity='1';setTimeout(()=>fl.style.opacity='0',80);
+  el.classList.add('selected');
+  el.classList.remove('selected');
+  void el.offsetWidth;// reflow
+  el.classList.add('selected');
+
+  // ALL SELECTED cheer
+  if(selCount===4){
+    setTimeout(()=>{
+      document.getElementById('coin-insert').textContent='— ALL FIGHTERS SELECTED — FIGHT! —';
+      document.getElementById('title-main').textContent='TEAM ASSEMBLED';
+    },300);
+  }
+}
+</script>
+</body>
+</html>
